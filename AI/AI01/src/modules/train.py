@@ -3,18 +3,27 @@ import os
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
-from torch.utils.data import DataLoader
+
 from tqdm import tqdm
+# from tqdm.notebook import tqdm
 
 import modules.data as data
 
 LEARNING_RATE = 1e-3
 
 
-def train(model: nn.Module, dataset_dir: os.PathLike, save_path: os.PathLike, num_epochs: int, save_all: bool = False):
-    training_data = data.TrainingData(dataset_dir)
+def train(model: nn.Module,
+          training_data: data.TrainingData,
+          save_path: os.PathLike,
+          num_epochs: int,
+          save_all: bool = False,
+          device: str = "cpu"):
 
-    criterion = nn.CrossEntropyLoss()
+    device = torch.device(device)
+
+    model = model.to(device)
+
+    criterion = nn.CrossEntropyLoss().to(device)
     optim = AdamW(model.parameters(), lr=LEARNING_RATE)
 
     best_acc = 0.0
@@ -27,10 +36,13 @@ def train(model: nn.Module, dataset_dir: os.PathLike, save_path: os.PathLike, nu
             total_loss = 0.0
             acc = 0.0
 
-            for landmarks, label in pbar:
+            for image, label in pbar:
+                image = image.to(device)
+                label = label.to(device)
+
                 optim.zero_grad()
 
-                output = model(landmarks)
+                output = model(image)
                 loss = criterion(output, label)
                 loss.backward()
                 optim.step()
@@ -49,8 +61,11 @@ def train(model: nn.Module, dataset_dir: os.PathLike, save_path: os.PathLike, nu
             acc = 0.0
 
             with torch.no_grad():
-                for landmarks, label in pbar:
-                    output = model(landmarks)
+                for image, label in pbar:
+                    image = image.to(device)
+                    label = label.to(device)
+
+                    output = model(image)
                     loss = criterion(output, label)
 
                     total_loss += loss.item() / len(training_data.validloader)
