@@ -1,3 +1,5 @@
+import os
+
 from torch.utils.data.dataloader import DataLoader
 from torchvision.datasets.cifar import CIFAR10
 from torchvision.datasets.mnist import MNIST
@@ -17,11 +19,13 @@ DEVICE="cpu"
 
 
 def main():
-    # model = modules.models.MLP(N_CLASSES)
+    os.makedirs(SAVE_PATH)
+
+    model = modules.models.MLP(N_CLASSES)
     # model = modules.models.LeNet5(N_CLASSES)
     # model = modules.models.VGG16(N_CLASSES)
     # model = modules.models.ResNet15(N_CLASSES)
-    model = model = EfficientNet.from_pretrained('efficientnet-b1', num_classes=N_CLASSES)
+    # model = model = EfficientNet.from_pretrained('efficientnet-b1', num_classes=N_CLASSES)
 
     trainset_MNIST = MNIST(
         root=DATASET_DIR,
@@ -86,8 +90,8 @@ def main():
                                        ))
 
     modules.train.train(model=model,
-                        # training_data=training_data_MNIST,
-                        training_data=training_data_CIFAR,
+                        training_data=training_data_MNIST,
+                        # training_data=training_data_CIFAR,
                         save_path=SAVE_PATH,
                         num_epochs=NUM_EPOCHS,
                         save_all=SAVE_ALL,

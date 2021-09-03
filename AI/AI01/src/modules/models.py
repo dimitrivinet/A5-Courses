@@ -10,14 +10,15 @@ class MLP(nn.Module):
         self.MLP = nn.Sequential(
             nn.Linear(28*28, 16*16),
             nn.ReLU(),
-
             nn.Linear(16*16, 8*8),
             nn.ReLU(),
 
             nn.Dropout(0.2),
 
-            nn.Linear(8*8, n_classes),
-            nn.ReLU()
+            nn.Linear(8*8, 4*4),
+            nn.ReLU(),
+
+            nn.Linear(4*4, n_classes)
         )
 
     def forward(self, x: torch.Tensor):
