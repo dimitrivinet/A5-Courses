@@ -1,0 +1,20 @@
+[
+    {
+        "author": "AUTHOR1",
+        "date": "DATE1",
+        "title": "TITLE1",
+        "subtitle": "SUBTITLE1",
+        "cover": "COVER (link)1",
+        "content_url": "CONTENT (link)1",
+        "content": "added by api"
+    },
+    {
+        "author": "AUTHOR2",
+        "date": "DATE2",
+        "title": "TITLE2",
+        "subtitle": "SUBTITLE2",
+        "cover": "COVER (link)2",
+        "content_url": "CONTENT (link)2",
+        "content": "added by api"
+    }
+]
