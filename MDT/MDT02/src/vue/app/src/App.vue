@@ -1,7 +1,17 @@
-<script></script>
+<script>
+import MarkdownArticle from "./vues/MarkdownArticle.vue";
+export default {
+    components: {
+        "MarkdownArticle": MarkdownArticle
+    }
+};
+</script>
 
 <template>
-<h1>Hello, World! (from Vue.js)</h1>
+  <div>
+    <h1>Hello, World! (from Vue.js)</h1>
+    <MarkdownArticle />
+  </div>
 </template>
 
 <style></style>

@@ -1,11 +1,23 @@
 import datetime
 import json
 
+import bson.errors
 import httpx
 import pymongo
 from bson.objectid import ObjectId
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class Article(BaseModel):
@@ -28,8 +40,6 @@ uri = f"mongodb://{MONGODB_USERNAME}:{MONGODB_PASSWORD}@{MONGODB_HOST}"
 client = pymongo.MongoClient(uri, 27017, serverSelectionTimeoutMS=5000)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
-
-app = FastAPI()
 
 
 @app.get("/")
@@ -69,9 +79,14 @@ async def delete_all_articles():
     return {"deleted_count": x.raw_result}
 
 
-@app.get("/mongodb/article/")
+@app.get("/mongodb/article/{article_id}")
 async def get_article_by_id(article_id: str):
-    article = collection.find_one({"_id": ObjectId(article_id)})
+    try:
+        article = collection.find_one({"_id": ObjectId(article_id)})
+    except bson.errors.InvalidId:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid article_id: {article_id}")
 
     article["_id"] = str(article["_id"])
 
@@ -87,13 +102,25 @@ async def add_article(article: Article):
             r = await client.get(article["content_url"])
         except Exception:
             raise HTTPException(
-                status_code=404, detail=f"Content not found at content_url: {article['content_url']}")
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Content not found at content_url: {article['content_url']}")
 
     article["content"] = r.content
 
     x = collection.insert_one(article)
 
     return {"inserted": str(x.inserted_id)}
+
+
+@app.delete("/mongodb/article/{article_id}")
+async def delete_all_articles(article_id: str):
+    try:
+        x = collection.delete_one({"_id": ObjectId(article_id)})
+    except bson.errors.InvalidId:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid article_id: {article_id}")
+    return {"deleted_count": x.raw_result}
 
 
 @app.post("/mongodb/articles")
@@ -105,10 +132,3 @@ async def add_articles(file: UploadFile = File(...)):
     inserted_ids = [{"id": str(inserted)} for inserted in x.inserted_ids]
 
     return {"inserted": inserted_ids}
-
-
-@app.delete("/mongodb/article")
-async def delete_all_articles(article_id: str):
-    x = collection.delete_one({"_id": ObjectId(article_id)})
-
-    return {"deleted_count": x.raw_result}

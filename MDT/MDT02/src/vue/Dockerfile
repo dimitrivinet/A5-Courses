@@ -5,7 +5,7 @@ RUN apk add --no-cache --virtual .gyp \
         make \
         g++
 
-COPY app/package.json /app/
+COPY app/package-lock.json /app/
 
 RUN cd /app && npm install
 
