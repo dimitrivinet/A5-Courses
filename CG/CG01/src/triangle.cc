@@ -98,7 +98,7 @@ int main()
 
     glfwTerminate();
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 // Is called whenever a key is pressed/released via GLFW
