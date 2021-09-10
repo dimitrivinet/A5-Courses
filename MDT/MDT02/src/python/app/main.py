@@ -121,14 +121,3 @@ async def delete_all_articles(article_id: str):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid article_id: {article_id}")
     return {"deleted_count": x.raw_result}
-
-
-@app.post("/mongodb/articles")
-async def add_articles(file: UploadFile = File(...)):
-    to_insert = json.load(file.file)
-
-    x = collection.insert_many(to_insert)
-
-    inserted_ids = [{"id": str(inserted)} for inserted in x.inserted_ids]
-
-    return {"inserted": inserted_ids}

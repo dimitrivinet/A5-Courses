@@ -1,9 +1,9 @@
 <script>
-import MarkdownArticle from "./vues/MarkdownArticle.vue";
+import MarkdownArticle from "./views/MarkdownArticle.vue";
 export default {
-    components: {
-        "MarkdownArticle": MarkdownArticle
-    }
+  components: {
+    MarkdownArticle: MarkdownArticle,
+  },
 };
 </script>
 
