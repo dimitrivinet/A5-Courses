@@ -9,7 +9,7 @@ find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
 file(GLOB_RECURSE HEADERS src/include/*.h)
-file(GLOB_RECURSE SOURCES src/lib/*.cc)
+file(GLOB_RECURSE SOURCES src/src/*.cc)
 
 file(GLOB_RECURSE VENDOR_HEADERS src/vendor/include/*.h)
 file(GLOB_RECURSE VENDOR_SOURCES src/vendor/src/*.cc src/vendor/src/*.c)
