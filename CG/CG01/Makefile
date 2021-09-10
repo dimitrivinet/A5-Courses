@@ -5,7 +5,7 @@ clean:
 
 build: clean
 	mkdir build
-	cd build && cmake .. && make && cd ..
+	cd build && cmake .. && make
 
 triangle:
 	./build/CG01_Triangle
