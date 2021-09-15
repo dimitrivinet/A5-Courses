@@ -11,13 +11,16 @@
 
 <body>
     <div id="ui">
-        <h1>Draw here! ⬇️</h1>
+        <h1 id="info">Draw here! ⬇️</h1>
         <h1>-</h1>
         <h1 id="clearButton">Clear</h1>
         <h1>-</h1>
         <h1 id="colorButton">Change color</h1>
+        <input type="color" id="colorPicker" value="#ffffff">
         <h1>-</h1>
-        <h1 id="widthButton">Change width</h1>
+        <h1 id="sizeButton">Change size</h1>
+        <input id="sizeSlider" type="range" min="1" max="30" value="10" class="slider" id="myRange">
+        <h1 id="sizeValue">10</h1>
     </div>
 
     <canvas id="cvs" width="800" height="600">
@@ -25,6 +28,9 @@
     </canvas>
 
     <script type="text/javascript" src="script.js"></script>
+
+
+
 </body>
 
 </html>
