@@ -19,17 +19,14 @@ class ClearButton extends UI {
 
   clearCanvas = () => {
     this.ctx.clearRect(0, 0, this.cvs.width, this.cvs.height);
-    console.log("cleared canvas");
   };
 }
 
 class ColorButton extends UI {
-  constructor(uiId, cvs, ctx, colorButtonId, colorPickerId) {
+  constructor(uiId, cvs, ctx, colorPickerId) {
     super(uiId, cvs, ctx);
-    this.colorButtonId = colorButtonId;
     this.colorPickerId = colorPickerId;
 
-    // this.colorButton = document.getElementById(this.colorButtonId);
     this.colorPicker = document.getElementById(this.colorPickerId);
 
     this.colorPicker.addEventListener("input", this.changeColor);
@@ -41,13 +38,11 @@ class ColorButton extends UI {
 }
 
 class SizeButton extends UI {
-  constructor(uiId, cvs, ctx, sizeButtonId, sizeSliderId, sizeValueId) {
+  constructor(uiId, cvs, ctx, sizeSliderId, sizeValueId) {
     super(uiId, cvs, ctx);
-    this.sizeButtonId = sizeButtonId;
     this.sizeSliderId = sizeSliderId;
     this.sizeValueId = sizeValueId;
 
-    // this.sizeButton = document.getElementById(this.sizeButtonId);
     this.sizeSlider = document.getElementById(this.sizeSliderId);
     this.sizeValue = document.getElementById(this.sizeValueId);
 
@@ -91,12 +86,10 @@ class Tool {
 
   mouseDown = (event) => {
     this.isDrawing = true;
-    console.log("starting drawing");
   };
 
   mouseUp = (event) => {
     this.isDrawing = false;
-    console.log("stopped drawing");
   };
 
   mouseMove = (event) => {
@@ -115,13 +108,11 @@ class Tool {
       this.isFirstTouch = false;
     }
     this.isDrawing = true;
-    console.log("starting drawing");
   };
 
   touchUp = (event) => {
     this.isDrawing = false;
     this.isFirstTouch = true;
-    console.log("stopped drawing");
   };
 
   touchMove = (event) => {
@@ -150,7 +141,7 @@ class Tool {
 }
 
 class CVS {
-  constructor(canvasId, uiId, clearButtonId, colorButtonId, colorPickerId, sizeButtonId, sizeSliderId, sizeValueId) {
+  constructor(canvasId, uiId, clearButtonId, colorPickerId, sizeSliderId, sizeValueId) {
     this.id = canvasId;
     this.uiId = uiId;
 
@@ -162,8 +153,8 @@ class CVS {
 
     this.tool = new Tool(this.cvs, this.ctx);
     this.clearButton = new ClearButton(this.uiId, this.cvs, this.ctx, clearButtonId);
-    this.colorButton = new ColorButton(this.uiId, this.cvs, this.ctx, colorButtonId, colorPickerId);
-    this.sizeButton = new SizeButton(this.uiId, this.cvs, this.ctx, sizeButtonId, sizeSliderId, sizeValueId);
+    this.colorButton = new ColorButton(this.uiId, this.cvs, this.ctx, colorPickerId);
+    this.sizeButton = new SizeButton(this.uiId, this.cvs, this.ctx, sizeSliderId, sizeValueId);
 
     this.canvasResize();
     window.addEventListener("resize", this.canvasResize);
@@ -182,4 +173,25 @@ class CVS {
   };
 }
 
-const cvs = new CVS("cvs", "ui", "clearButton", "colorButon", "colorPicker", "sizeButton", "sizeSlider", "sizeValue");
+class Menu {
+  constructor(menuButtonId, menuItemsId) {
+    this.menuButtonId = menuButtonId;
+    this.menuItemsId = menuItemsId;
+    this.menuButton = document.getElementById(this.menuButtonId);
+    this.menuItems = document.getElementById(this.menuItemsId);
+
+    this.menuButton.addEventListener("mousedown", this.toggleMenu);
+  }
+
+  toggleMenu = (event) => {
+    let toHide = this.menuItems.querySelectorAll("*");
+    for (let element of toHide) {
+        element.hidden = !element.hidden;
+    }
+  }
+}
+
+const cvs = new CVS("cvs", "menuItems", "clearButton", "colorPicker", "sizeSlider", "sizeValue");
+
+const menu = new Menu("menuButton", "menuItems");
+menu.toggleMenu();
