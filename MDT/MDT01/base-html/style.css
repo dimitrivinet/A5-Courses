@@ -1,0 +1,115 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #3e3e3e;
+  margin: 0 0 3rem; /* bottom = footer height */
+}
+
+article {
+  max-width: 768px;
+  margin: 0 auto 0 auto;
+  text-align: justify;
+  font-size: medium;
+}
+
+h1,
+h2 {
+  padding: 0;
+  margin: 0;
+}
+
+h1 {
+  font-weight: 900;
+  font-size: 4rem;
+}
+
+h2 {
+  text-align: center;
+}
+
+p {
+  padding: 0;
+  margin: 0;
+}
+
+#websiteDesc {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+#articleMeta {
+  text-align: center;
+  font-size: 0.9rem;
+  margin: 0 0 2rem 0;
+}
+
+.inc {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+
+  gap: 1rem;
+  margin: 2rem 0 2rem 0;
+}
+
+header {
+  text-align: center;
+}
+
+figure {
+  border: thin #c0c0c0 solid;
+  display: flex;
+  flex-flow: column;
+  padding: 5px;
+  margin: auto;
+  max-width: 10rem;
+}
+
+figcaption {
+  background-color: #222;
+  color: #fff;
+  font: italic smaller sans-serif;
+  padding: 3px;
+  text-align: center;
+}
+
+.authorInfo {
+  display: flex;
+  flex-direction: row;
+  align-content: left;
+  gap: 2rem;
+  padding: 0;
+  margin: 2rem 0 4rem 0;
+}
+
+.authorInfo h2 {
+  align-self: center;
+}
+
+.authorInfo button {
+  align-self: center;
+  margin-left: auto;
+  margin-right: 5rem;
+}
+
+footer {
+  position: absolute;
+  height: 3rem;
+  min-width: 100%;
+  bottom: 0;
+  padding: 0;
+  font-size: small;
+  background-color: #fff;
+  text-align: center;
+  /*border: 1px solid red;*/
+  margin: 0 auto;
+}
