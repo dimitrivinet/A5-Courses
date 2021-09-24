@@ -1,2 +1,5 @@
-harry_potter_books
+harry_potter_books/pdfs
+
 .venv
+
+*.zip
