@@ -2,6 +2,4 @@ harry_potter_books/pdfs
 
 .venv
 
-*.zip
-
 __pycache__
