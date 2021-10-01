@@ -8,7 +8,7 @@ find_package(OpenGL REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
 
-file(GLOB_RECURSE HEADERS src/include/*.h)
+file(GLOB_RECURSE HEADERS src/include/*.hh)
 file(GLOB_RECURSE SOURCES src/src/*.cc)
 
 file(GLOB_RECURSE VENDOR_HEADERS src/vendor/include/*.h)
