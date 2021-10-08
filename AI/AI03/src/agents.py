@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+import pickle
+from abc import ABC, abstractmethod
+
 import gym
 import numpy as np
 import tqdm
-
-from abc import ABC, abstractmethod
 
 
 class Agent(ABC):
@@ -71,6 +74,22 @@ class Agent(ABC):
                 )
 
                 self.env.close()
+
+    def save(self, output_path: str):
+        """Save trained Agent in pickle format."""
+
+        with open(output_path, 'wb') as outp:
+            pickle.dump(self, outp, pickle.HIGHEST_PROTOCOL)
+
+    @classmethod
+    def load(cls, agent_path: str) -> Agent:
+        """Load trained Agent from pickle file."""
+
+        with open(agent_path, 'rb') as inp:
+            agent: Agent = pickle.load(inp)
+
+        return agent
+
 
     @abstractmethod
     def __call__(self, state: int) -> int:

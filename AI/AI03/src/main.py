@@ -13,7 +13,11 @@ def main():
     agent = RandomAgent(TAXI, LR, DF)
 
     agent.fit(N_EPISODES)
-    agent.test()
+    agent.save("trained_agent.pkl")
+
+    agent_loaded = RandomAgent.load("trained_agent.pkl")
+    print(type(agent_loaded))
+    agent_loaded.test()
 
 
 if __name__ == "__main__":
