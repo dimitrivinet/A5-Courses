@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import pickle
 from abc import ABC, abstractmethod
 
@@ -12,20 +13,21 @@ class Agent(ABC):
     """Base class for a Q learning agent."""
 
     env: gym.Env  # gym env
+    n_actions: int
+    n_states: int
     lr: float  # learing rate
     df: float  # discount factor
     eps: float  # epsilon greedy
     Q: np.ndarray  # Q matrix
 
-    def __init__(self, env: str, lr: float, df: float):
+    def __init__(self, env: str, n_actions: int, n_states: int, lr: float, df: float):
         self.env = gym.make(env)
+        self.n_actions = n_actions
+        self.n_states = n_states
         self.lr = lr
         self.df = df
 
         self.eps = 0.95
-
-        self.n_actions = self.env.action_space.n
-        self.n_states = self.env.observation_space.n
 
         self.Q = np.zeros((self.n_states, self.n_actions))
 
@@ -77,6 +79,10 @@ class Agent(ABC):
 
     def save(self, output_path: str):
         """Save trained Agent in pickle format."""
+
+        dirname = os.path.dirname(output_path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname, exist_ok=True)
 
         with open(output_path, 'wb') as outp:
             pickle.dump(self, outp, pickle.HIGHEST_PROTOCOL)
