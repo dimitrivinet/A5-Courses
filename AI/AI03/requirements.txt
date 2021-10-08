@@ -4,3 +4,5 @@ torchvision==0.10.1+cpu
 torchaudio==0.9.1
 gym==0.21.0
 pyglet==1.5.21
+tqdm==4.62.3
+numpy==1.21.2
