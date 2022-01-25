@@ -8,7 +8,7 @@
 
 ## Content
 
-<!-- Abstract -->
+Sharing a server's computational power between individuals can be an arduous task. Users need to be able to deploy the applications they want, but they can't be allowed to interfere with other's applications or even the system itself. Developping a web interface for the server is a way to make it accessible to everyone, even beginners, while keeping control over what they can and cannot do. quick-k8s allows system administrators to give their users the power to deploy applications, while keeping their infrastructure secure.
 
 # Article
 
@@ -16,66 +16,642 @@
 
 # Context
 
-- FastAPI
-- Docker
-- DevOps
-  - Kubernetes
-    - Minikube
+Creating a web application backend supplemented by a database requires a way to deploy the database and backend themselves, and a way for them to communicate with each other. Such a thing can easily be done by using microservices.
 
-# Skills / Opportunities
+Microservices is an architecture that structures applications as a group of services that interact between each other and can be started, stopped and modified independently of each other. Microservices are an efficient way to develop and deploy applications require more than one component, e.g. a program dependent on a database. A solution for managing microservices is kubernetes [^1] (k8s, for short). In kubernetes, services take the form of containers, isolated units of software with their own installed programs and applications. Kubernetes is normally hard to setup, but minikube [^2] allows users to deploy a cluster locally, on a virtual machine or docker container, for developpment.
 
-- Create and deploy an API with FastAPI
-- Learn about authentification with JWTs
-- Learn how to easily integrate databases with ORM
+For creating the backend itself, there are many solutions that exist in python. The choice for this tutorial was FastAPI [^3] for its ease of use and its use of OpenAPI for generating interactive API docs. OpenAPI generates a "frontend" that allows the developper to test the backend without using any HTML, CSS, or JavaScript.
+
+![](https://dvic.devinci.fr/api/v3/img/full/os8ck1c2kaprcx7o0lxljd2t7k1for.png)
+
+# Skills and Opportunities
+
+With this tutorial, you will learn how to create, and most importantly deploy a web API built using FastAPI. We will go over securing the application, with certain different permissions for different users as well as how to use Object-Relational Mapping (ORM) to interact with databases more easily. Last but not least, you will learn how to use kubernetes to deploy applications, and to manage a kubernetes cluster from python.
 
 # Tutorial
 
+## File structure
+
+The project follows the following file structure:
+
+```bash
+.
+└── <project_name>/
+    ├── k8s/
+    │   └── ...
+    ├── src/
+    │   ├── app/
+    │   │   ├── routers/
+    │   │   ├── __init__.py
+    │   │   ├── main.py
+    │   │   └── ...
+    │   ├── Dockerfile
+    │   └── requirements.txt
+    ├── README.md
+    └── ...
+```
+
+The `k8s` folder contains files related to the kubernetes cluster, mainly files representing resources to be deployed.
+
+The `src` folder contains the application itself. Python source code is contained in `app`. The folder also contains the `Dockerfile` and the python requirements file `requirement.txt`.
+
 ## Requirements
 
-- minikube
-- kubectl
-- python >= 3.9
-  - requirements.txt
+- Any kubernetes cluster (recommended for development: [minikube](https://minikube.sigs.k8s.io/docs/))
+- [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl)
 
-Optional:
 
-- Conda / Miniconda
+### Python requirements
 
-## Setup
+Create a `./src/requirements.txt` file with the following content:
 
-- minikube: start
-- kubectl: set context, ...
-- conda / venv
+```python
+# requirements.txt
+fastapi==0.68.1
+uvicorn==0.15.0
+python-jose==3.3.0
+cryptography==3.4.8
+python-multipart==0.0.5
+passlib==1.7.4
+bcrypt==3.2.0
+kubernetes==18.20.0
+SQLAlchemy==1.4.26
+mysql-connector-python==8.0.27
+```
 
-## Database
+The application cannot be started locally, only on the cluster, so there is no need to install the requirements on your machine.
 
-- mysql deployment, pv, pvc
+
+## Kubernetes cluster setup
+
+### Start kubernetes cluster
+
+Run:
+
+```bash
+minikube start
+```
+
+to start a kubernetes cluster with minikube.
+
+### Create namespaces and set context
+
+Use kubectl to create a namespace for our application, and set the kubectl context to use the namespace by default.
+
+```bash
+kubectl create namespace quick-k8s-manager
+kubectl create namespace quick-k8s-children
+kubectl config set-context minikube --namespace quick-k8s-manager
+```
+
+## Deploying the application
+
+Two things are needed for deploying the application: the deployment and the permissions.
+
+The deployment is how the application will run, while the permissions keep the application and the users from damaging the cluster.
+
+Here is the basic deployment file `k8s/quick_k8s.yml`:
+
+```yaml
+#quick_k8s.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quick-k8s-manager-deployment
+  labels:
+    app: quick-k8s-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: quick-k8s-manager
+  template:
+    metadata:
+      labels:
+        app: quick-k8s-manager
+    spec:
+      serviceAccountName: quick-k8s-manager
+      automountServiceAccountToken: true
+      containers:
+      - name: quick-k8s-manager
+        image: <image name>
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quick-k8s-manager-service
+spec:
+  selector:
+    app: quick-k8s-manager
+  type: NodePort
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8000
+      targetPort: 8000
+```
+
+Make sure to replace `image_name` at `spec.template.spec.containers.image` by the name of the docker image that will be built in future steps.
+
+This file tells the cluster to create a deployment, which creates pods (only one in this case) running the docker image of the application, and a service to access it from outside the cluster.
+
+Permissions are stored in two files:
+
+`./k8s/child_config.yml`:
+
+```yaml
+# child_config.yml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: quick-k8s-child
+  namespace: quick-k8s-children
+automountServiceAccountToken: false
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: quick-k8s-child
+  namespace: quick-k8s-children
+rules:
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: quick-k8s-child
+  namespace: quick-k8s-children
+subjects:
+- kind: ServiceAccount
+  name: quick-k8s-child
+roleRef:
+  kind: Role
+  name: quick-k8s-child
+  apiGroup: rbac.authorization.k8s.io
+```
+
+and `./k8s/manager_config.yml`:
+
+```yaml
+# manager_config.yml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: quick-k8s-manager
+automountServiceAccountToken: false
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: quick-k8s-manager
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: quick-k8s-manager
+subjects:
+- kind: ServiceAccount
+  name: quick-k8s-manager
+  namespace: quick-k8s-manager
+roleRef:
+  kind: ClusterRole
+  name: quick-k8s-manager
+  apiGroup: rbac.authorization.k8s.io
+```
+
+Deploy these files with:
+
+```bash
+kubectl apply -f k8s/quick_k8s.yml
+kubectl apply -f k8s/child_config.yml
+kubectl apply -f k8s/manager_config.yml
+```
+
+The configurations have to be applied before anything else because the manager and children deployments need the roles to exist to be able to start.
+
+The manager config gives all permissions to the application withing the manager namespace, while the child config gives no permissions to the children.
+
+## Database (in kubernetes)
+
+Create a database and deploy it to the cluster. This can be done simply with a file containing the deployment, Persistent Volume (where the database files are stored on the disk) and Persistent Volume Claim (the way the cluster accesses the files).
+
+Create a file called `mysql_deployment.yml` in `./k8s/` with this content:
+
+```yaml
+# mysql_deployment.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql
+        env:
+          # Use secret in real usage
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+```
+
+Deploy it to the cluster with:
+
+```bash
+kubectl apply -f k8s/mysql_deployment.yml
+```
+
+This file tells the cluster to create four things at once:
+
+- A deployment starting one pod running an instance of a MySQL server
+- A service to make the deployment accessible to other applications in the cluster
+- A Persistent Volume
+- A Persistent Volume Claim
+
+## Database (in python code)
+
+To access and manipulate the database in python, it is recommended to use Object-Relational Mapping (ORM). ORM allows to use basic python functions and objects to interact with the database, instead of using MySQL commands. It adds a layer of abstraction, making it much easier.
+
+The application should contain a file for ORM classs declaration:
+
+```python
+# app/database/orm.py
+from sqlalchemy.orm import registry
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime
+
+mapper_registry = registry()
+Base = mapper_registry.generate_base()
+
+
+class User(Base):
+    """User model."""
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    first_name = Column(String(50))
+    last_name = Column(String(50))
+    username = Column(String(100), unique=True)
+    email = Column(String(100))
+    hashed_password = Column(String(256))
+    disabled = Column(Boolean())
+    role = Column(Integer, ForeignKey("roles.id"))
+
+    def dict(self) -> dict:
+        """Returns a dict representation of the user."""
+
+        return {
+            "id": self.id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "username": self.username,
+            "email": self.email,
+            "hashed_password": self.hashed_password,
+            "disabled": self.disabled,
+            "role": self.role,
+        }
+
+    def __repr__(self):
+        return (
+            f"User(id={self.id}, "
+            f"first_name={self.first_name}, "
+            f"last_name={self.last_name}, "
+            f"username={self.username}, "
+            f"email={self.email}, "
+            f"hashed_password={self.hashed_password}, "
+            f"disabled={self.disabled}, "
+            f"role={self.role})"
+        )
+```
+
+A file for setting up the tables and getting sessions to interacti with the database:
+
+```python
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import sessionmaker, Session
+
+from app.database.orm import Base
+
+_engine: Engine
+_session = sessionmaker(autocommit=False, expire_on_commit=True)
+
+
+def setup_engine(url: str, echo: bool = False) -> Engine:
+    """Sets up engine with provided url. Set echo to True if you want
+    commands sent to database to be echoed in terminal."""
+
+    global _engine
+
+    _engine = create_engine(url, echo=echo)
+    _session.configure(bind=_engine)
+
+
+def create_tables():
+    """Creates tables as registered in orm.py.
+    Doesn't change anything if tables already exist."""
+
+    if _engine is None:
+        raise ValueError(
+            "Engine is not setup. Call setup_engine() before create_tables()."
+        )
+
+    Base.metadata.create_all(_engine)
+
+
+def get_session() -> Session:
+    """Returns a session to interact with the database. Expires after each commit."""
+
+    if _engine is None:
+        raise ValueError(
+            "Engine is not setup. Call setup_engine() before get_session()."
+        )
+
+    session = _session()
+
+    return session
+```
+
+`setup_engine` and `create_tables` should be called at the start of the program. `create_tables` will throw an exception if the tables already exist, which can be ignored after the first program start.
+
+The session is used for executing calls on the database. Here is an example of its usage:
+
+```python
+from app.database.orm import User
+from app.database.utils import get_session
+
+def add_user(user: User) -> None:
+    """Add user to database."""
+
+    session = get_session()
+    session.add(user)
+    session.commit()
+```
+
+See SQLAlchemy's [documentation](https://docs.sqlalchemy.org/en/14/) for more details on ORM in python.
+
+## Docker
+
+Kubernetes allows to deploy docker containers on a cluster. As such, the application needs to be dockerized. Here is the Dockerfile for the application:
+
+```dockerfile
+# Dockerfile
+FROM python:3.8
+
+RUN python3 -m venv .venv && \
+  .venv/bin/python3 -m pip install --upgrade pip
+
+COPY requirements.txt app/requirements.txt
+
+RUN .venv/bin/pip3 install -r app/requirements.txt
+
+COPY app ./app
+
+CMD [".venv/bin/uvicorn", "app.main:app", "--host=0.0.0.0" ]
+```
+
+which starts from a basic python image, installs dependencies and runs the applicaton.
+
+## FastAPI
+
+Inside `src/app/main.py`, create a basic FastAPI application that will serve as the base for the project:
+
+```python
+from typing import Optional
+
+from fastapi import FastAPI
+from app import routers
+
+app = FastAPI()
+
+app.include_router(routers.router)
+```
+
+The routers part doesn't make complete sense for now, but it will be developped in the next step:
+
+## Routers
+
+Routers are a way to declutter the main file by creating HTTP routes in other files. It also separates routes that have nothing to do with each other, for better code clarity.
+
+Here is the structure for the `routers` folder:
+
+```bash
+.
+├── app/
+│   ├── routers/
+│   │   ├── __init__.py
+│   │   ├── auth.py
+│   │   └── k8s.py
+│   └── ...
+└── ...
+```
+
+Each file starts with the base:
+
+```python
+from fastapi import APIRouter
+
+router = APIRouter()
+# or, with a prefix to the routes:
+# router = APIRouter(prefix="/<route_prefix>")
+```
+
+And the `__init__.py` file regroups all the routers to make them accessible to the main file:
+
+```python
+# __init__.py
+from fastapi import APIRouter
+
+from app.routers import k8s, auth, ...
+
+router = APIRouter()
+
+router.include_router(k8s.router)
+router.include_router(auth.router)
+router.include_router(...)
+...
+```
 
 ## Authentification
 
-- auth with jwt with FastAPI
+The application has full access to the cluster, so in order to prevent users accessing sensible information or breaking the system, authentification needs to be implemented.
+
+Follow FastAPI's [tutorial](https://fastapi.tiangolo.com/tutorial/security/first-steps/) for authentification to set it up for the application. Use a router in an `auth.py` file for the routes related to authentification.
 
 ## Kubernetes
 
-- pip package description
-- required functions
+Kubernetes offers an official package for manipulating a cluster in python. It can automatically load the configuration, so no need to configure it manually.
 
-## Deployment
+Several things are required for the application to be functional:
 
-- deployment.yml
-- deployment, service, namespace, roles, rolebindings, ...
+- Listing a user's resources
+- Deploying resources from a user-provided file
+- Deleting resources
 
-# Evaluation
+Here is an example for deploying resources:
 
-- finished product evaluation
-- is the process clear ? are steps well explained ?
+### Deploying from a user-provided file
+
+Adding a resource to the cluster consists of five steps:
+
+- Receiving the file from the user
+- Validating the file
+- Forcing the cluster role
+- Deploying the resources
+- Adding the resources to the database
+
+#### Receiving the file
+
+Here is the route signature for creating a resource:
+
+```python
+@router.post("/")
+async def create_resource(
+    yaml_file: UploadFile = File(...),
+    current_user: auth.User = Depends(auth.get_current_active_user),
+):
+  ...
+```
+
+It takes a file and the user who wants the file deployed as a parameter.
+
+Transform the file in YAML format to a list of python dicts:
+
+```python
+yamls_as_dicts = list(yaml.safe_load_all(yaml_file.file))
+```
+
+- why a list ? : YAML files can contain multiple documents in a single file, by using the `---` separator. In addition, `yaml.safe_load_all` returns a generator, which must be listified since it is going to be used multiple times.
+- why `safe_load` ? : normal YAML loading can execute arbitrary code, so it is necessary to use `safe_load` instead of the normal `load` since the file comes from a potentially malicious user.
+
+#### Validating the file
+
+The kubernetes package has options for validating deployment files, with the `dry_run` argument. For example, for validating a deployment, use:
+
+```python
+k8s_apps_v1.create_namespaced_deployment(
+    body=data,                   # dict from the list in previous step
+    namespace=target_namespace,  # child namespace name
+    dry_run="All"
+)
+```
+
+which throws an exception if validation fails.
+
+#### Forcing the cluster role
+
+Force the deployment to use the permissions set in the previous step. An example is this function:
+
+```python
+def add_role(data: dict) -> dict:
+    data["spec"]["template"]["spec"]["serviceAccountName"] = CHILD_ROLE_NAME
+    data["spec"]["template"]["spec"]["automountServiceAccountToken"] = True
+
+    return data
+```
+
+which takes a dict translated from YAML and adds the two necessary attributes to force a role. Note that handling KeyErrors is unnecessary since the path `spec.template.spec` is necessary for a valid deployment.
+
+#### Deploying the resources
+
+Use the same functions as in the validation step, without the `dry_run` argument.
+Optional: record which resources were deployed to return them as the response to teh request.
+
+#### Adding the resources to the database
+
+Using ORM, add each deployed resource to the database:
+
+```python
+new_resource = database.orm.Resource(
+    owner=owner_id,      # deploying user id
+    name=deployed_name,  # deployed resource name
+    type=deployed_type,  # deployed resource type
+    created_timestamp=datetime.now(),
+)
+
+database.resources.add_resource(new_resource)
+```
 
 # Conclusion
 
-- enjeux
-- compétences apprises
-- opportunités offertes
-- limites
-- références pour aller plus loin
+This tutorial presented the general steps to create an application which can deploy, delete and manage resources on a kubernetes cluster via a web API. This application allows users, even beginners, to deploy, delete and manage applications in the form of containers on a server running a kubernetes cluster.
+
+In this tutorial, we went over the creation of a web API with FastAPI, securing the API, using ORM to interact with a database, and deploying the application on the cluster. We gave a general direction for creating quick-k8s without going too deep into details. The application can be adapted to your needs, particularly with authentification, and some features can be added to make it more robust: individual namespaces for different groups of users, shell access to running pods, ...
+
+To go further, see FastAPI's multiple tutorials, as well as the documentations for the kubernetes python package and SQLAlchemy.
 
 # Bibliography
+
+[^1]: Kubernetes: https://kubernetes.io/
+
+[^2]: Minikube: https://minikube.sigs.k8s.io/
+
+[^3]: FastAPI: https://fastapi.tiangolo.com/

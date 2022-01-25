@@ -1,3 +1,9 @@
+# About
+
+## Content
+
+Graph-it is a new way to track the accomplishment of your goals. It helps you to stay motivated and see your progress. It aims to be a centerpiece in your living environment and remind you of your objectives, while not overburdening you with the pressure of having to be perfect.
+
 # Article
 
 ## Content
@@ -30,21 +36,27 @@ Of course! Just use different color bands for different tasks. We will provide a
 
 # Be creative ! 🖌
 
-@[center](1,begin)
+@[split](2, begin)
+
+@[center](4,begin)
 
 As the Graph-it is versatile you can use it any way you want !
 
-@[center](1,end)
+@[center](4,end)
 
 ![](https://ksr-ugc.imgix.net/assets/032/325/343/919fdb081c1005ef4bcaba3209382032_original.png?ixlib=rb-2.1.0&w=680&fit=max&v=1612970141&auto=format&frame=1&lossless=true&s=8e9df2c1c526a25f829b90d5e9e82a9f)
 
-@[center](1,begin)
+@[split](2, break)
+
+@[center](3,begin)
 
 Have fun with your Graph-it and vary your style
 
-@[center](1,end)
+@[center](3,end)
 
 ![](https://ksr-ugc.imgix.net/assets/032/324/645/ee97822fe194e745772b9f7a28212b31_original.png?ixlib=rb-2.1.0&w=680&fit=max&v=1612966738&auto=format&frame=1&lossless=true&s=cfff0f54571ca70eaf53093432b01637)
+
+@[split](2, end)
 
 @[center](1,begin)
 
@@ -62,6 +74,8 @@ In your kitchen
 
 @[center](1,end)
 
+@[split](2, begin)
+
 ![](https://ksr-ugc.imgix.net/assets/032/325/204/d135f0a380509263549ff1f004eed8a8_original.jpeg?ixlib=rb-2.1.0&w=680&fit=max&v=1612969511&auto=format&frame=1&q=92&s=8d39aa475607fd2d262f22ca81f72246)
 
 @[center](1,begin)
@@ -70,13 +84,17 @@ At your desk
 
 @[center](1,end)
 
+@[split](2, break)
+
 ![](https://ksr-ugc.imgix.net/assets/032/325/262/650dd0c24c2f2152011957032610bcbe_original.jpeg?ixlib=rb-2.1.0&w=680&fit=max&v=1612969782&auto=format&frame=1&q=92&s=c6afc4a2eb930bafaf4ac2e8ff17c46e)
 
-@[center](1,begin)
+@[center](3,begin)
 
 In your living room
 
-@[center](1,end)
+@[center](3,end)
+
+@[split](2, end)
 
 # Why ? 📈
 
